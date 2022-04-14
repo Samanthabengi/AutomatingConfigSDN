@@ -1,0 +1,17 @@
+[appserver]
+127.0.0.1 ansible_connection=local
+
+[targets]
+
+[switches]
+
+[controllers]
+
+[targets:vars]
+ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null'
+
+[switches:vars]
+ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null'
+
+[controllers:vars]
+ansible_ssh_common_args='-o UserKnownHostsFile=/dev/null'
