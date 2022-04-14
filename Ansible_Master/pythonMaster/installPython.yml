@@ -1,0 +1,7 @@
+---
+- name: add default
+  raw: ip route add default via 192.168.0.2 dev eth{{ eth }}
+- name: Update and upgrade  
+  raw: apt -y update && apt -y upgrade
+- name: install Python
+  raw: apt install -y python3

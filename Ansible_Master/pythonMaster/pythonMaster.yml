@@ -1,0 +1,21 @@
+- name: install Python
+  hosts: controllers
+  remote_user: root
+  gather_facts: false
+  tasks:
+    - name: python Controllers
+      include_tasks: installPython.yml
+- name: install Python
+  hosts: switches
+  remote_user: root
+  gather_facts: false
+  tasks:  
+    - name: python Switches
+      include_tasks: installPython.yml
+- name: install Python
+  hosts: targets
+  remote_user: root
+  gather_facts: false
+  tasks:  
+    - name: python Hosts
+      include_tasks: installPython.yml
