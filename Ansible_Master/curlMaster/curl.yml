@@ -1,0 +1,77 @@
+---
+   - name: check is file exists
+     stat:
+       path: "~/switchid"
+     register: file_data
+   - name: chmod
+     command: chmod 755 ~/
+   - name: add address
+     command: ifconfig -a
+     register: mac_address
+     when: not file_data.stat.exists
+   - name: create empty file
+     file:
+       path: "~/mac"
+       state: touch
+     become: yes
+     when: not file_data.stat.exists
+   - name: add line
+     ansible.builtin.lineinfile:
+       path: ~/mac
+       insertbefore: BOF
+       line: "{{ mac_address }}"
+     when: not file_data.stat.exists
+   - name: slurp
+     slurp:
+       src: ~/mac
+     register: xenfile
+     when: not file_data.stat.exists
+   - name: create empty file
+     file:
+       path: "~/brmac"
+       state: touch
+     become: yes
+     when: not file_data.stat.exists
+   - name: isolate password
+     debug: msg="{{ xenfile['content'] | b64decode | regex_search('br0:.flags=....<.+>..mtu.1500..........ether..................') }}"
+     register: isolatepassword
+     when: not file_data.stat.exists
+   - name: add line
+     ansible.builtin.lineinfile:
+       path: ~/brmac
+       insertbefore: BOF
+       line: "{{ isolatepassword }}"
+     when: not file_data.stat.exists
+   - name: slurp
+     slurp:
+       src: ~/brmac
+     register: mac
+     when: not file_data.stat.exists
+   - name: create empty file
+     file:
+       path: "~/switchid"
+       state: touch
+     become: yes
+     when: not file_data.stat.exists
+   - name: add line
+     ansible.builtin.lineinfile:
+       path: ~/switchid
+       insertbefore: BOF
+       line: 0000{{ mac['content'] | b64decode | regex_search('00.16.3e.........') }}
+     when: not file_data.stat.exists
+   - name: replace colons
+     command: sed -i 's/\://g' ~/switchid
+     when: not file_data.stat.exists
+   - name: slurp
+     slurp:
+       src: ~/switchid
+     register: switchid  
+   - name: test
+     debug: msg="{{ switchid['content'] | b64decode | regex_search('\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S') }}"
+   - name: Set the addresses
+     uri:
+       url: http://{{ controllerIP }}:8080/router/{{ switchid['content'] | b64decode | regex_search('\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S') }}
+       method: POST
+       body: '{"address":"{{ item.ip2 }}/24"}'
+       body_format: json
+     with_items: "{{ vars[ hostname + '_vars'] }}"  

@@ -1,0 +1,13 @@
+---
+   - name: slurp
+     slurp:
+       src: ~/switchid
+     register: switchid 
+   - name: set static routes
+     uri:
+       url: http://{{ controllerIP }}:8080/router/{{ switchid['content'] | b64decode | regex_search('\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S\S') }}
+       method: POST
+       body: '{"destination": "{{ item.destination }}", "gateway": "{{ item.gateway }}"}'
+       body_format: json
+     with_items: "{{ vars[hostname + '_flows'] }}"
+     when: item.action is defined

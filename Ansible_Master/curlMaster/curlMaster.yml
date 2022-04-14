@@ -1,0 +1,22 @@
+- name: run curl commands
+  hosts: switches
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: curl commands
+      include_tasks: curl.yml
+- name: run curl commands
+  hosts: switches
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: static routes
+      include_tasks: staticRoutes.yml
+- name: ping all vms
+  hosts: targets
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+  - name: ping
+    command: ping {{ item.vmip }} -c 8
+    with_items: "{{ vars_host }}"
