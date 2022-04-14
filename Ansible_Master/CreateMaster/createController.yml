@@ -1,0 +1,59 @@
+---
+
+- name: xen create 
+  command: xen-create-image --hostname "{{ item.hostname }}" --memory=768mb --vcpus=1 --size=1536mb --lvm=xen001-vg --ip="{{ item.vmip }}" --netmask=255.255.255.0 --bridge="{{ item.vmBridge }}" --pygrub --dist=bullseye
+  register: password
+- name: add second bridge and ip
+  command: sed -i "s/' ]/','ip={{ item.ip2 }} ,mac={{ '00:16:3E' | community.general.random_mac }},bridge={{ item.bridge2 }}' ]/g" /etc/xen/{{ item.hostname }}.cfg
+  when: item.bridge2 is defined   
+  with_items: "{{ vars[item.hostname + '_vars'] }}"
+- name: add xenbr0
+  command: sed -i "s/' ]/','ip={{ item.ip3 }} ,mac={{ '00:16:3E' | community.general.random_mac }},bridge=xenbr0']/g" /etc/xen/{{ item.hostname }}.cfg
+  when: item.ip3 is defined
+- name: make directory
+  command: mkdir /mnt/"{{ item.hostname }}"
+- name: mount vm
+  command: mount /dev/xen001-vg/"{{ item.hostname }}"-disk /mnt/"{{ item.hostname }}" 
+- name: replace line
+  command: sed -i 's/#PermitRootLogin Yes/PermitRootLogin Yes/g' /mnt/"{{ item.hostname }}"/etc/ssh/sshd_config
+- name: replace line
+  command: sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin Yes/g' /mnt/"{{ item.hostname }}"/etc/ssh/sshd_config
+- name: replace line
+  command: sed -i 's/#IgnoreUserKnownHosts no/IgnoreUserKnownHosts yes/g' /mnt/"{{ item.hostname }}"/etc/ssh/sshd_config
+- name: replace line
+  command: sed -i 's/prohibit-password/Yes/g' /mnt/"{{ item.hostname }}"/etc/ssh/sshd_config
+- name: replace line
+  command: sed -i 's/#IgnoreUserKnownHosts yes/IgnoreUserKnownHosts yes/g' /mnt/"{{ item.hostname }}"/etc/ssh/sshd_config
+- name: sed
+  command: sed -i '$ a auto eth{{ item.number }}\niface eth{{ item.number }} inet static\n  address {{ item.ip2 }}\n\n  netmask 255.255.255.0' /mnt/"{{ item.hostname }}"/etc/network/interfaces
+  with_items: "{{ vars[ item.hostname + '_vars'] }}"
+- name: eth up
+  command: sed -i '$ a auto eth{{ item.eth }}\niface eth{{ item.eth }} inet static\n  address {{ item.ip3 }}\n\n  netmask 255.255.0.0' /mnt/"{{ item.hostname }}"/etc/network/interfaces
+  when: item.eth is defined
+- name: bullseye
+  command: sed -i 's/bullseye\/updates/bullseye-security/g' /mnt/"{{ item.hostname }}"/etc/apt/sources.list
+- name: unmount vm
+  command: umount /mnt/"{{ item.hostname }}"
+- name: remove directory
+  command: rmdir /mnt/"{{ item.hostname }}"
+- name: create file
+  local_action: copy content={{ password }} dest=/etc/xen/{{ item.hostname }}_file    
+- name: slurp
+  slurp:
+    src: /etc/xen/{{ item.hostname }}_file
+  register: xenfile
+- name: output password
+  debug: msg="{{ xenfile['content'] | b64decode | regex_search('Root Password.  .  (.......................)') }}" 
+  register: isolatepass
+- name: create password file
+  local_action: copy content={{ isolatepass }} dest=./{{ item.hostname }}_password
+- name: slurp
+  slurp:
+    src: /etc/xen/{{ item.hostname }}_password
+  register: finalpass 
+- name: add line
+  command: sed -i '/\[controllers\]/a {{ item.hostname }}admin ansible_connection=ssh ansible_ssh_user=root ansible_ssh_pass={{ finalpass['content'] | b64decode | regex_search('(\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w\w)') }} eth={{ item.eth }}' "{{ inventory }}"
+- name: add line to host file
+  command: sed -i '$ a {{ item.ip3 }} {{ item.hostname }}admin {{ item.hostname }}' /etc/hosts
+- name: remove file
+  command: rm /etc/xen/"{{ item.hostname }}"_file

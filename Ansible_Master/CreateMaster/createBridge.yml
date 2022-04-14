@@ -1,0 +1,7 @@
+---
+- name: add bridge
+  command: brctl addbr "{{ item.bridge  }}"
+  when: item.bridge is defined
+- name: bridge up
+  command: ifconfig "{{ item.bridge }}" "{{ item.ip }}" netmask 255.255.255.0 up
+  when: item.bridge is defined

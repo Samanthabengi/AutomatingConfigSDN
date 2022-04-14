@@ -1,0 +1,30 @@
+---
+- name: create vms
+  hosts: appserver
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: bridge
+      include_tasks: createBridge.yml
+      with_items: "{{ vars_bridge }}"
+    - name: host up
+      include_tasks: createHost.yml
+      with_items: "{{ vars_host }}"
+    - name: switch up
+      include_tasks: createSwitch.yml
+      with_items: "{{ vars_switch }}"
+    - name: controller up
+      include_tasks: createController.yml
+      with_items: "{{ vars_controller }}"
+    - name: create hosts
+      include_tasks: create.yml
+      with_items: "{{ vars_host }}"
+    - name: create switches
+      include_tasks: create.yml
+      with_items: "{{ vars_switch }}"
+    - name: create controllers
+      include_tasks: create.yml
+      with_items: "{{ vars_controller }}"  
+    - name: delete routes
+      include_tasks: deleteRoutes.yml
+      with_items: "{{ vars_bridge }}"

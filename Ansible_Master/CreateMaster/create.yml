@@ -1,0 +1,3 @@
+---
+- name: xl create
+  command: xl create /etc/xen/"{{ item.hostname }}".cfg
