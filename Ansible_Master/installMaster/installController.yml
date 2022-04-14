@@ -1,0 +1,10 @@
+---
+
+- name: install traceroute
+  command: apt-get -y install traceroute
+- name: install pip3
+  command: apt-get -y install python3-pip
+- name: install ryu
+  command: pip3 install ryu
+- name: evenlet
+  command: pip3 install eventlet==0.30.2

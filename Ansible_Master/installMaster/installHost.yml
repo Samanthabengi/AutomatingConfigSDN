@@ -1,0 +1,12 @@
+---
+
+- name: install traceroute
+  command: apt-get -y install traceroute
+- name: install tcpdump
+  command: apt-get -y install tcpdump
+- name: delete default
+  command: ip route del default
+- name: add default route
+  command: ip route add default via {{ item.ip2 }}
+  with_items: "{{ vars[ switch + '_vars' ] }}"
+  when: item.bridge2 == vmBridge

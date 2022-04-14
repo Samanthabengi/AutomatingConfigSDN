@@ -1,0 +1,21 @@
+---
+- name: install openvswitch
+  command: apt-get -y install openvswitch-switch
+- name: install curl
+  command: apt-get -y install curl
+- name: install traceroute
+  command: apt-get -y install traceroute
+- name: install tcpdump
+  command: apt-get -y install tcpdump
+- name: install nettools
+  command: apt-get install net-tools
+- name: add ovs bridge
+  command: ovs-vsctl add-br br0
+- name: ifconfig
+  command: ip link set dev br0 up
+- name: add eth to br0
+  command: ovs-vsctl add-port br0 eth{{ item.number }}
+  with_items: "{{ vars[ hostname + '_vars'] }}"
+- name: add switch to controller
+  command: ovs-vsctl set-controller br0 tcp:"{{ controllerIP }}":6633
+  when: controllerIP is defined

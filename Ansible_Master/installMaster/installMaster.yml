@@ -1,0 +1,22 @@
+---
+- name: install ryu
+  hosts: controllers
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: ryu
+      include_tasks: installController.yml
+- name: install ovs
+  hosts: switches
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: ovs
+      include_tasks: installSwitch.yml
+- name: install traceroute
+  hosts: targets
+  vars_files:
+    - /etc/xen/{{ vars }}.yml
+  tasks:
+    - name: hosts
+      include_tasks: installHost.yml
