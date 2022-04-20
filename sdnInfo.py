@@ -1,13 +1,16 @@
 # import networkx as nx
 import json
 import random
+import sys
 x=' '
-with open('./sdnFatTreeNew.json', 'r') as f:
+filename = sys.argv[1]
+with open(filename, 'r') as f:
     gData = json.load(f)
-    net = gData['graph']['sdnInfo']
+    #net = gData['graph']['sdnInfo']
+    net = gData['graph']
     net2 = gData['graph']
-    adminIP = ''
-    adminBridge = ''
+    adminIP = sys.argv[2]
+    adminBridge = sys.argv[3]
     # bridge info
     print("---")
     print("vars_bridge:")
